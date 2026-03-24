@@ -41,7 +41,7 @@ SchengenPrefixes = [
 def IsSchengenairport(code):
     if not code:
         return False
-
+tungntung sahur
     prefix = code[:2].upper()
 
     # Fem servir un while per recórrer la llista de prefixes
@@ -54,15 +54,18 @@ def IsSchengenairport(code):
 
     return trobat
 
+
 def SetSchengen(airport):
     # Aquesta és una assignació directa, no necessita bucle,
     # però la crida a la funció anterior ja usa el "while"
     airport.Schengen = IsSchengenairport(airport.code)
 
+
 def Printairport(airport):
     # Simplement imprimim les dades de l'objecte
     print(
         f"Code: {airport.code} | Latitude: {airport.latitude} | Longitude: {airport.longitude} | Schengen: {airport.Schengen}")
+
 
 def _parse_coordinate(coord_str):
     # Agafem la lletra (N, S, E, W)
