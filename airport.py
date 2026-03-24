@@ -44,34 +44,34 @@ def IsSchengenairport(code):
 
     prefix = code[:2].upper()
 
-    # Fem servir un while per recórrer la llista de prefixes
+# We use a while to iterate through the list of prefixes
     i = 0
     trobat = False
     while i < len(SchengenPrefixes):
         if SchengenPrefixes[i] == prefix:
             trobat = True
-        i = i + 1  # Anem al següent element
+        i = i + 1  # Let's move on to the next item.
 
     return trobat
 
 def SetSchengen(airport):
-    # Aquesta és una assignació directa, no necessita bucle,
-    # però la crida a la funció anterior ja usa el "while"
+    # This is a direct assignment, no loop needed,
+    # but the previous function call already uses the "while"
     airport.Schengen = IsSchengenairport(airport.code)
 
 def Printairport(airport):
-    # Simplement imprimim les dades de l'objecte
+    # We simply print the object data
     print(
         f"Code: {airport.code} | Latitude: {airport.latitude} | Longitude: {airport.longitude} | Schengen: {airport.Schengen}")
 
 def _parse_coordinate(coord_str):
-    # Agafem la lletra (N, S, E, W)
+    # Let's take the letter (N, S, E, W)
     direction = coord_str[0]
 
-    # Per treure els números (deg, min, sec) sense fer servir talls complexos,
-    # podem fer servir un while per anar guardant caràcters:
+    # To extract the numbers (deg, min, sec) without using complex cuts,
+    # we can use a while to store characters:
 
-    # 1. Agafem els graus (del caràcter 1 fins abans dels últims 4)
+    # 1. We take the degrees (from character 1 until before the last 4)
     deg_str = ""
     i = 1
     limit_deg = len(coord_str) - 4
@@ -80,7 +80,7 @@ def _parse_coordinate(coord_str):
         i = i + 1
     deg = float(deg_str)
 
-    # 2. Agafem els minuts (els dos següents)
+    # 2. Let's take the minutes (the next two)
     min_str = ""
     limit_min = len(coord_str) - 2
     while i < limit_min:
@@ -88,15 +88,15 @@ def _parse_coordinate(coord_str):
         i = i + 1
     min = float(min_str)
 
-    # 3. Agafem els segons (els dos últims)
+    # 3. Let's take the seconds (the last two)
     sec_str = ""
     while i < len(coord_str):
         sec_str = sec_str + coord_str[i]
         i = i + 1
     sec = float(sec_str)
 
-    # Nota: Aquí faltaria la fórmula per retornar el valor final,
-    # però t'he posat el "while" per separar els números del text.
+    # Note: The formula to return the final value would be missing here,
+    # but we put the "while" to separate the numbers from the text.
 
     decimal = deg + (min/60) + (sec/3600)
 

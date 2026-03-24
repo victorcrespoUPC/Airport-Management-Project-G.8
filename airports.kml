@@ -12,10 +12,10 @@
         </IconStyle>
     </Style>
 <Placemark>
-  <name>LELL</name>
+  <name>EK</name>
   <styleUrl>#schengen</styleUrl>
   <Point>
-    <coordinates>3.0,3.0,0</coordinates>
+    <coordinates>65.0,23.0,0</coordinates>
   </Point>
 </Placemark>
 </Document>
