@@ -41,7 +41,7 @@ def IsSchengenairport(code):
     if not code:
         return False  #If no code is entered, we must recieve the Boolean result False.
     prefix = code[:2].upper()
-    return prefix in SchengenPrefixes
+    return prefix in SchengenPrefixes #TODO: Canviar per un while
 
 def SetSchengen(airport):
     airport.Schengen = IsSchengenairport(airport.code)

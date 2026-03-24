@@ -36,7 +36,7 @@ for ap in airports: #Here we test the SetSchengen function,
 
 from airport import *
 for ap in airports[:5]:
-    PrintAirport(ap) #This will show the fist five airports.
+    Printairport(ap) #This will show the fist five airports.
 
 from airport import * #Here we will test if new airports can be added.
 newap = airport("LEBL", 41.297445, 2.0832941)

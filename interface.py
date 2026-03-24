@@ -21,15 +21,16 @@ def load_airports():
 
 def add_airport():
     code = entry_code.get().strip().upper()
+    if not code:
+        messagebox.showerror("Error", "Introduce an ICAO code.")
+        return
     try:
         lat = float(entry_lat.get().strip())
         lon = float(entry_lon.get().strip())
     except ValueError:
         messagebox.showerror("Error", "Latitude and longitude must be numbers.")
         return
-    if not code:
-        messagebox.showerror("Error", "Introduce an ICAO code.")
-        return
+
 
     new_ap = airport(code, lat, lon)
     SetSchengen(new_ap)
@@ -69,13 +70,13 @@ def save_schengen():
 
 def show_plot():
     if not airports:
-        messagebox.showerror("Error", "No airports were loaded.")
+        messagebox.showerror("Error", "No airports were loaded!")
         return
     PlotAirports(airports)
 
 def show_map():
     if not airports:
-        messagebox.showerror("Error", "No hay aeropuertos cargados.")
+        messagebox.showerror("Error", "There are no loaded airports.")
         return
     MapAirports(airports)
     messagebox.showinfo("KML created", "File airports.kml was generated.\n Use Google Earth to open it.")
@@ -86,23 +87,23 @@ def update_listbox():
         schengen_str = "✔ Schengen" if ap.Schengen else "✘ Not a Schengen airport"
         listbox.insert(tk.END, f"{ap.code} | Latitude: {ap.latitude:.4f} | Longitude: {ap.longitude:.4f} | {schengen_str}")
 
-
+#Main display:
 root = tk.Tk()
 root.title("Airport Management")
 root.geometry("750x600")
 
-
+#Character customization:
 tk.Label(root, text=" Airport Management", font=("Arial", 16, "bold")).pack(pady=10)
 
 frame_buttons = tk.Frame(root)
 frame_buttons.pack(pady=5)
-
+#Interface will display the following items:
 tk.Button(frame_buttons, text="Load airports", width=20, command=load_airports).grid(row=0, column=0, padx=5, pady=5)
 tk.Button(frame_buttons, text="Save Schengen", width=20, command=save_schengen).grid(row=0, column=1, padx=5, pady=5)
 tk.Button(frame_buttons, text="See comparison graph", width=20, command=show_plot).grid(row=0, column=2, padx=5, pady=5)
 tk.Button(frame_buttons, text="View in Google Earth", width=20, command=show_map).grid(row=0, column=3, padx=5, pady=5)
 
-
+#Interface customization code:
 frame_add = tk.LabelFrame(root, text="Add / Eliminate airports", padx=10, pady=10)
 frame_add.pack(pady=10, fill="x", padx=20)
 
@@ -121,11 +122,9 @@ entry_lon.grid(row=0, column=5, padx=5)
 tk.Button(frame_add, text="Add", width=10, command=add_airport).grid(row=0, column=6, padx=5)
 tk.Button(frame_add, text="Eliminate", width=10, command=remove_airport).grid(row=0, column=7, padx=5)
 
-# Lista de aeropuertos
+#Airport list:
 tk.Label(root, text="Airport list:", font=("Arial", 11, "bold")).pack(anchor="w", padx=20)
 listbox = tk.Listbox(root, width=100, height=20, font=("Courier", 9))
 listbox.pack(padx=20, pady=5, fill="both", expand=True)
 
 root.mainloop()
-
-
