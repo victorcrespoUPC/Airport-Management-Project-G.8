@@ -2,10 +2,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from airport import *
 
-# Variable global para la lista de aeropuertos
 airports = []
 
-# ── FUNCIONES DE LA INTERFAZ ──────────────────────────────────────
+
 
 def load_airports():
     global airports
@@ -32,7 +31,7 @@ def add_airport():
         messagebox.showerror("Error", "Introduce an ICAO code.")
         return
 
-    new_ap = airport(code, latitude, longitude)
+    new_ap = airport(code, lat, lon)
     SetSchengen(new_ap)
     AddAirport(airports, new_ap)
     update_listbox()
