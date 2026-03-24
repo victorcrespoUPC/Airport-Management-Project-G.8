@@ -46,13 +46,13 @@ def IsSchengenairport(code):
 
 # We use a while to iterate through the list of prefixes
     i = 0
-    trobat = False
+    found = False
     while i < len(SchengenPrefixes):
         if SchengenPrefixes[i] == prefix:
-            trobat = True
+            found = True
         i = i + 1  # Let's move on to the next item.
 
-    return trobat
+    return found
 
 def SetSchengen(airport):
     # This is a direct assignment, no loop needed,
