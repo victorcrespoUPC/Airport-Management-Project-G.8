@@ -37,6 +37,11 @@ SchengenPrefixes = [
     'LS'  #Switzerland
 ]
 
+def FindAirport(airports, code): #Receives a list of airports and an ICAO code.
+    for ap in airports:
+        if ap.code == code.upper():
+            return ap
+    return None
 
 def IsSchengenairport(code):
     if not code:
@@ -160,7 +165,7 @@ def SaveSchengenAirports(airports, filename):
 def AddAirport(airports, new_airport):
     for a in airports:
         if a.code == new_airport.code:
-            print(f"Error: El aeropuerto {new_airport.code} ya existe.")
+            print(f"Error: The airport {new_airport.code} already exists.")
             return
     airports.append(new_airport)
 

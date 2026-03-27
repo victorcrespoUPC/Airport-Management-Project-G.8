@@ -12,10 +12,24 @@
         </IconStyle>
     </Style>
 <Placemark>
-  <name>EK</name>
+  <name>LEBL</name>
   <styleUrl>#schengen</styleUrl>
   <Point>
-    <coordinates>65.0,23.0,0</coordinates>
+    <coordinates>2.0783333333333336,41.29694444444444,0</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>LEMD</name>
+  <styleUrl>#schengen</styleUrl>
+  <Point>
+    <coordinates>-3.560833333333333,40.47222222222222,0</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>LFPG</name>
+  <styleUrl>#schengen</styleUrl>
+  <Point>
+    <coordinates>2.5477777777777777,49.00972222222222,0</coordinates>
   </Point>
 </Placemark>
 </Document>

@@ -2,8 +2,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from airport import *
 
-airports = []
+# Load all airports from file (for searching coordinates)
+all_airports = LoadAirports("Airports.txt")
+for ap in all_airports:
+    SetSchengen(ap)
 
+# This is the list shown in the interface (starts empty)
+airports = []
 
 
 def load_airports():
@@ -24,21 +29,19 @@ def add_airport():
     if not code:
         messagebox.showerror("Error", "Introduce an ICAO code.")
         return
-    try:
-        lat = float(entry_lat.get().strip())
-        lon = float(entry_lon.get().strip())
-    except ValueError:
-        messagebox.showerror("Error", "Latitude and longitude must be numbers.")
+
+    # Search in the full database
+    found = FindAirport(all_airports, code)
+    if found is None:
+        messagebox.showerror("Error", f"Airport {code} not found in database.")
         return
 
-
-    new_ap = airport(code, lat, lon)
-    SetSchengen(new_ap)
-    AddAirport(airports, new_ap)
+    # Add to the visible list
+    SetSchengen(found)
+    AddAirport(airports, found)
     update_listbox()
     entry_code.delete(0, tk.END)
-    entry_lat.delete(0, tk.END)
-    entry_lon.delete(0, tk.END)
+
 
 def remove_airport():
     code = entry_code.get().strip().upper()
@@ -46,7 +49,7 @@ def remove_airport():
         messagebox.showerror("Error", "Enter the ICAO code of the airport you want to eliminate.")
         return
     result = RemoveAirport(airports, code)
-    if result == -1:
+    if result == -1: #Reason why we needed -1 in prior result!
         messagebox.showerror("Error", f"The airport {code} isn't registered.")
     else:
         messagebox.showinfo("Success", f"Airport {code} was eliminated.")
@@ -111,16 +114,10 @@ tk.Label(frame_add, text="ICAO code:").grid(row=0, column=0, sticky="w")
 entry_code = tk.Entry(frame_add, width=10)
 entry_code.grid(row=0, column=1, padx=5)
 
-tk.Label(frame_add, text="Latitude:").grid(row=0, column=2, sticky="w")
-entry_lat = tk.Entry(frame_add, width=10)
-entry_lat.grid(row=0, column=3, padx=5)
+#LINES WERE ELIMINATED
 
-tk.Label(frame_add, text="Longitude:").grid(row=0, column=4, sticky="w")
-entry_lon = tk.Entry(frame_add, width=10)
-entry_lon.grid(row=0, column=5, padx=5)
-
-tk.Button(frame_add, text="Add", width=10, command=add_airport).grid(row=0, column=6, padx=5)
-tk.Button(frame_add, text="Eliminate", width=10, command=remove_airport).grid(row=0, column=7, padx=5)
+tk.Button(frame_add, text="Add", width=10, command=add_airport).grid(row=0, column=2, padx=5)
+tk.Button(frame_add, text="Eliminate", width=10, command=remove_airport).grid(row=0, column=3, padx=5)
 
 #Airport list:
 tk.Label(root, text="Airport list:", font=("Arial", 11, "bold")).pack(anchor="w", padx=20)
