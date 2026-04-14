@@ -71,18 +71,3 @@ PlotAirports(airports) #Here we test PlotAirports
 
 MapAirports(airports) #Here we test MapAirports
                       #End result is correct for now, as we recieve that no airports were loaded, and also no errors occur!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
