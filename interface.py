@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from airport import *
+from aircraft import *
 
 
 # Load all airports from file (for searching coordinates)
