@@ -112,24 +112,37 @@ def PlotAirlines(aircrafts):
     plt.title("Flights per airline")
     plt.show()
 
+
 def PlotFlightsType(aircrafts):
-    if not aircrafts:
-        print("Error: No data loaded.")
+    if len(aircrafts) == 0:
+        print("Error: No hi ha dades per mostrar.")
         return
 
     schengen = 0
-    non_schengen = 0
-    for a in aircrafts:
-        if IsSchengenairport(a.origin):
-            schengen += 1
+    no_schengen = 0
+
+    # Comprem quants vols són de cada tipus
+    i = 0
+    while i < len(aircrafts):
+        # Mirem l'aeroport d'origen de l'avió
+        if IsSchengenairport(aircrafts[i].origin) == True:
+            schengen = schengen + 1
         else:
-            non_schengen += 1
+            no_schengen = no_schengen + 1
+        i = i + 1
 
     plt.figure()
-    plt.bar(["FLights"], [schengen], label="Schengen", color="blue")
-    plt.bar(["Flights"], [non_schengen], bottom=[schengen], label="Non-Schengen", color="red")
-    plt.legend()
-    plt.title("Types of flights (Schengen vs No-Schengen)")
+
+    # Primera barra (la de sota): Schenegen
+    plt.bar(["Vols"], [schengen], color="green", label="Schengen")
+
+    # Segona barra (la de sobre): Non-Schengen
+    # El truc és el paràmetre 'bottom': li diem que comenci on acaba la de schengen
+    plt.bar(["Vols"], [no_schengen], bottom=[schengen], color="red", label="Non-Schengen")
+
+    plt.title("Tipus de vols (Stacked Bar)")
+    plt.ylabel("Numero de vols")
+    plt.legend()  # Això fa que surti el quadre explicatiu dels colors
     plt.show()
 
 # As seen in other versions and class exercises, this part calculates the distance of each route.
