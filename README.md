@@ -1,5 +1,5 @@
 # Airport-Management-Project-G.8
-Version 1
+Version 2
 Erika Rubí
 Víctor Crespo
 Kexin Wang
