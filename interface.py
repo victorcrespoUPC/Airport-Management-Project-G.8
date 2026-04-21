@@ -10,6 +10,7 @@ i = 0
 while i < len(all_airports):
     ap = all_airports[i]
     SetSchengen(ap)
+
     i = i + 1
 
 # This is the list shown in the interface (starts empty)

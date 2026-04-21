@@ -240,6 +240,7 @@ def MapAirports(airports): #Here we create the kml files that will show the airp
         kml_content += f'  </Point>\n'
         kml_content += f'</Placemark>\n'
 
+
     kml_content += '</Document>\n'
     kml_content += '</kml>\n'
 
