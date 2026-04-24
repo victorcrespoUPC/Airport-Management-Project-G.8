@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from airport import *
-from aircraft import *
+
 
 
 # Load all airports from file (for searching coordinates)
@@ -114,41 +114,7 @@ def update_listbox():
 
         i = i + 1
 
-flights = []
 
-def load_arrivals_ui():
-    global flights
-    filename = filedialog.askopenfilename(title="Select Arrivals file", filetypes=[("Text files", "*.txt")])
-    if filename:
-        flights = LoadArrivals(filename)
-        messagebox.showinfo("Success", f"Loaded {len(flights)} flights.")
-
-def save_flights_ui():
-    filename = filedialog.asksaveasfilename(title="Save Flights", filetypes=[("Text files", "*.txt")])
-    if filename:
-        SaveFlights(flights, filename)
-
-def map_flights_ui(long_only=False):
-    MapFlights(flights, only_long=long_only)
-    messagebox.showinfo("KML", "flights.kml generated!")
-
-def clear_arrivals():  #We will use this to reload new flights, being able to eliminate the ones we don't want to study anymore
-    global arrivals
-    arrivals = []
-    messagebox.showinfo("Success", "All arrivals cleared.")
-
-def reload_arrivals_ui():
-    global arrivals
-    filename = filedialog.askopenfilename(
-        title="Select New Arrivals File",
-        filetypes=[("Text files", "*.txt")]
-    )
-    if filename:
-        arrivals = LoadArrivals(filename)
-        if len(arrivals) > 0:
-            messagebox.showinfo("Success", f"Loaded {len(arrivals)} new flights.")
-        else:
-            messagebox.showerror("Error", "No valid flights found in file.")
 
 #Main display:
 root = tk.Tk()
@@ -186,20 +152,5 @@ listbox.pack(padx=20, pady=5, fill="both", expand=True)
 
 #We create the version 2 interface, which will be displayed under the old one:
 
-#The new frame:
-frame_v2 = tk.LabelFrame(root, text="VERSION 2: ARRIVALS ✈ ️", padx=10, pady=10)
-frame_v2.pack(pady=10, fill="x", padx=20)
-
-tk.Button(frame_v2, text="Load Arrivals", width=15, command=load_arrivals_ui).grid(row=0, column=0, padx=5)
-tk.Button(frame_v2, text="Plot Hours", width=15, command=lambda: PlotArrivals(flights)).grid(row=0, column=1, padx=5)
-tk.Button(frame_v2, text="Plot Airlines", width=15, command=lambda: PlotAirlines(flights)).grid(row=0, column=2, padx=5)
-tk.Button(frame_v2, text="Plot Schengen", width=15, command=lambda: PlotFlightsType(flights)).grid(row=0, column=3, padx=5)
-
-tk.Button(frame_v2, text="Save Flights", width=15, command=save_flights_ui).grid(row=1, column=0, padx=5, pady=5)
-tk.Button(frame_v2, text="Map All Flights", width=15, command=lambda: map_flights_ui(False)).grid(row=1, column=1, padx=5, pady=5)
-tk.Button(frame_v2, text="Map Long Dist", width=15, command=lambda: map_flights_ui(True)).grid(row=1, column=2, padx=5, pady=5)
-
-tk.Button(frame_v2, text="Clear All Arrivals", width=15, command=clear_arrivals,bg='red').grid(row=2, column=0, padx=5, pady=5)
-tk.Button(frame_v2, text="Reload Arrivals", width=15, command=reload_arrivals_ui,bg='green').grid(row=2, column=1, padx=5, pady=5)
 
 root.mainloop()
