@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from airport import *
 from aircraft import *
-
+from LEBL import *
 
 # Load all airports from file (for searching coordinates)
 all_airports = LoadAirports("Airports.txt")
@@ -150,6 +150,59 @@ def reload_arrivals_ui():
         else:
             messagebox.showerror("Error", "No valid flights found in file.")
 
+bcn_airport = None
+
+
+def load_lebl_structure():
+    global bcn_airport
+    filename = "LEBL.txt"  # O filedialog.askopenfilename()
+    bcn_airport = LoadAirportStructure(filename)
+    if bcn_airport:
+        messagebox.showinfo("LEBL", "LEBL airport structure loaded correctly.")
+    else:
+        messagebox.showerror("Error", "Could not find or load LEBL.txt.")
+
+
+def assign_gates_to_flights():
+    if not bcn_airport:
+        messagebox.showerror("Error", "First you have to load the LEBL structure.")
+        return
+    if not flights:
+        messagebox.showerror("Error", "There are no flights loaded in Version 2.")
+        return
+
+    assigned_count = 0
+    for flight in flights:
+        # Busquem l'objecte aeroport d'origen per saber si és Schengen
+        origin_ap = FindAirport(all_airports, flight.origin)
+        is_schengen = origin_ap.Schengen if origin_ap else False
+
+        # Intentem assignar porta
+        res = AssignGate(bcn_airport, flight, is_schengen)
+        if res == 0:
+            assigned_count += 1
+
+    messagebox.showinfo("Assignació", f"Doors have been assigned to {assigned_count} flights.")
+    show_occupancy_ui()
+
+
+def show_occupancy_ui():
+    if not bcn_airport: return
+
+    # Creem una finestra nova per mostrar l'estat
+    top = tk.Toplevel(root)
+    top.title("Door Status - LEBL")
+    txt = scrolledtext.ScrolledText(top, width=60, height=20)
+    txt.pack()
+
+    occupancy = GateOccupancy(bcn_airport)
+    txt.insert(tk.END, f"{'DOOR':<15} | {'STATE':<10} | {'AIRCRAFT':<10}\n")
+    txt.insert(tk.END, "-" * 40 + "\n")
+
+    for gate, status, ac_id in occupancy:
+        line = f"{gate:<15} | {status:<10} | {str(ac_id):<10}\n"
+        txt.insert(tk.END, line)
+
 #Main display:
 root = tk.Tk()
 root.title("Airport Management")
@@ -201,5 +254,18 @@ tk.Button(frame_v2, text="Map Long Dist", width=15, command=lambda: map_flights_
 
 tk.Button(frame_v2, text="Clear All Arrivals", width=15, command=clear_arrivals,bg='red').grid(row=2, column=0, padx=5, pady=5)
 tk.Button(frame_v2, text="Reload Arrivals", width=15, command=reload_arrivals_ui,bg='green').grid(row=2, column=1, padx=5, pady=5)
+
+
+frame_v3 = tk.LabelFrame(root, text="VERSION 3: GATE MANAGEMENT 🏢", padx=10, pady=10, fg="black")
+frame_v3.pack(pady=10, fill="x", padx=20)
+
+tk.Button(frame_v3, text="Data structure LEBL", width=25,
+          command=load_lebl_structure).grid(row=0, column=0, padx=5)
+
+tk.Button(frame_v3, text="Assign gates", width=25,
+          command=assign_gates_to_flights).grid(row=0, column=1, padx=5)
+
+tk.Button(frame_v3, text="Show gate occupancy", width=25,
+          command=show_occupancy_ui).grid(row=0, column=2, padx=5)
 
 root.mainloop()
