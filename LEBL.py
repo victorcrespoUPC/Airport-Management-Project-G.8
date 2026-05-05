@@ -128,3 +128,44 @@ def LoadAirportStructure(filename):
 
     except Exception:
         return None
+def GateOccupancy(bcn):
+    result = []
+
+    t = 0
+    while t < len(bcn.terminals):
+        terminal = bcn.terminals[t]
+        a = 0
+        while a < len(terminal.boarding_areas):
+            area = terminal.boarding_areas[a]
+            g = 0
+            while g < len(area.gates):
+                gate = area.gates[g]
+                result.append({
+                    "gate_name": gate.name,
+                    "status": "occupied" if gate.occupied else "free",
+                    "aircraft_id": gate.aircraft_id
+                })
+                g += 1
+            a += 1
+        t += 1
+
+    return result
+
+def IsAirlineInTerminal(terminal,name):
+    if name == '':
+        return False
+    if len (terminal.airline) ==0: #Empty list
+        return False
+    i=0
+    while i< len(terminal.airline):
+        if terminal.airline[i]==name:
+            return True
+    i+=1
+
+def SearchTerminal(bcn,name):
+    i=0
+    while i<len(bcn.terminlals):
+        if IsAirlineInTerminal(bcn.terminals[i],name):
+            return bcn.terminals[i].name
+        i+=1
+    return ''
