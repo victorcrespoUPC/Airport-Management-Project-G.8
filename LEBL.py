@@ -169,3 +169,41 @@ def SearchTerminal(bcn,name):
             return bcn.terminals[i].name
         i+=1
     return ''
+def AssignGate(bcn, aircraft):
+    # 1. Buscar la terminal
+    terminal_name = SearchTerminal(bcn, aircraft.airline)
+
+    # 2. Si no se encuentra → error
+    if terminal_name == "":
+        return -1
+
+    # 3. Encontrar el objeto Terminal
+    terminal = None
+    i = 0
+    while i < len(bcn.terminals):
+        if bcn.terminals[i].name == terminal_name:
+            terminal = bcn.terminals[i]
+        i += 1
+
+    # 4. Recorrer áreas buscando tipo Schengen correcto
+    a = 0
+    while a < len(terminal.boarding_areas):
+        area = terminal.boarding_areas[a]
+        if area.type == aircraft.schengen:
+
+            # 5. Buscar primera gate libre
+            g = 0
+            while g < len(area.gates):
+                gate = area.gates[g]
+                if not gate.occupied:
+
+                    # 6. Asignar y retornar éxito
+                    gate.occupied = True
+                    gate.aircraft_id = aircraft.id
+                    return 0
+
+                g += 1
+        a += 1
+
+    # Sin gates libres del tipo correcto
+    return -1
