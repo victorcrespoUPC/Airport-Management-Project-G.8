@@ -155,12 +155,12 @@ bcn_airport = None
 
 def load_lebl_structure():
     global bcn_airport
-    filename = "LEBL.txt"  # O filedialog.askopenfilename()
+    filename = "Terminals.txt"
     bcn_airport = LoadAirportStructure(filename)
     if bcn_airport:
         messagebox.showinfo("LEBL", "LEBL airport structure loaded correctly.")
     else:
-        messagebox.showerror("Error", "Could not find or load LEBL.txt.")
+        messagebox.showerror("Error", "Could not find or load Terminals.txt.")
 
 
 def assign_gates_to_flights():
@@ -173,11 +173,11 @@ def assign_gates_to_flights():
 
     assigned_count = 0
     for flight in flights:
-        # Busquem l'objecte aeroport d'origen per saber si és Schengen
+        # We look for the origin airport object to know if it is Schengen
         origin_ap = FindAirport(all_airports, flight.origin)
         is_schengen = origin_ap.Schengen if origin_ap else False
 
-        # Intentem assignar porta
+        # We try to assign the door
         res = AssignGate(bcn_airport, flight, is_schengen)
         if res == 0:
             assigned_count += 1
@@ -189,7 +189,7 @@ def assign_gates_to_flights():
 def show_occupancy_ui():
     if not bcn_airport: return
 
-    # Creem una finestra nova per mostrar l'estat
+    # Let's create a new window to show the status
     top = tk.Toplevel(root)
     top.title("Door Status - LEBL")
     txt = scrolledtext.ScrolledText(top, width=60, height=20)
