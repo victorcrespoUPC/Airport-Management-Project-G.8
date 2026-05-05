@@ -255,6 +255,7 @@ tk.Button(frame_v2, text="Map Long Dist", width=15, command=lambda: map_flights_
 tk.Button(frame_v2, text="Clear All Arrivals", width=15, command=clear_arrivals,bg='red').grid(row=2, column=0, padx=5, pady=5)
 tk.Button(frame_v2, text="Reload Arrivals", width=15, command=reload_arrivals_ui,bg='green').grid(row=2, column=1, padx=5, pady=5)
 
+# We create the version 3 interface, which will be displayed under the old ones:
 
 frame_v3 = tk.LabelFrame(root, text="VERSION 3: GATE MANAGEMENT 🏢", padx=10, pady=10, fg="black")
 frame_v3.pack(pady=10, fill="x", padx=20)
