@@ -151,7 +151,7 @@ def reload_arrivals_ui():
             messagebox.showerror("Error", "No valid flights found in file.")
 
 bcn_airport = None
-
+flights=[]
 
 def load_lebl_structure():
     global bcn_airport
@@ -164,30 +164,57 @@ def load_lebl_structure():
 
 
 def assign_gates_to_flights():
+    global bcn_airport
     if not bcn_airport:
-        messagebox.showerror("Error", "First you have to load the LEBL structure.")
+        messagebox.showerror("Error", "First load the LEBL structure.")
         return
     if not flights:
-        messagebox.showerror("Error", "There are no flights loaded in Version 2.")
+        messagebox.showerror("Error", "No flights loaded.")
         return
+
+    import datetime
+    now = datetime.datetime.now()
+    current_minutes = now.hour * 60 + now.minute
+
+    # Reset all gates
+    for terminal in bcn_airport.terminals:
+        for area in terminal.boarding_areas:
+            for gate in area.gates:
+                gate.occupied = False
+                gate.aircraft_id = None
 
     assigned_count = 0
     for flight in flights:
-        # We look for the origin airport object to know if it is Schengen
-        origin_ap = FindAirport(all_airports, flight.origin)
-        is_schengen = origin_ap.Schengen if origin_ap else False
+        try:
+            h, m = flight.time.split(':')
+            flight_minutes = int(h) * 60 + int(m)
+        except:
+            continue
 
-        # We try to assign the door
-        res = AssignGate(bcn_airport, flight, is_schengen)
-        if res == 0:
-            assigned_count += 1
+        # Only flights that arrived in the last 90 minutes AND haven't left yet
+        if current_minutes - 90 <= flight_minutes <= current_minutes:
+            origin_ap = FindAirport(all_airports, flight.origin)
+            is_schengen = origin_ap.Schengen if origin_ap else False
+            if AssignGate(bcn_airport, flight, is_schengen) == 0:
+                assigned_count += 1
+    total_gates = 0
+    free_gates = 0
+    for terminal in bcn_airport.terminals:
+        for area in terminal.boarding_areas:
+            for gate in area.gates:
+                total_gates += 1
+                if not gate.occupied:
+                    free_gates += 1
 
-    messagebox.showinfo("Assignació", f"Doors have been assigned to {assigned_count} flights.")
-    show_occupancy_ui()
-
+    messagebox.showinfo("Assignment",
+                        f"Active flights at {now.strftime('%H:%M')}: {assigned_count}\n"
+                        f"Occupied gates: {total_gates - free_gates}\n"
+                        f"Free gates: {free_gates}\n"
+                        f"Total gates: {total_gates}")
 
 def show_occupancy_ui():
-    if not bcn_airport: return
+    if not bcn_airport:
+        return
 
     # Let's create a new window to show the status
     top = tk.Toplevel(root)
@@ -199,9 +226,15 @@ def show_occupancy_ui():
     txt.insert(tk.END, f"{'DOOR':<15} | {'STATE':<10} | {'AIRCRAFT':<10}\n")
     txt.insert(tk.END, "-" * 40 + "\n")
 
-    for gate, status, ac_id in occupancy:
+    for entry in occupancy:
+        gate = entry["gate_name"]
+        status = entry["status"]
+        ac_id = entry["aircraft_id"]
         line = f"{gate:<15} | {status:<10} | {str(ac_id):<10}\n"
         txt.insert(tk.END, line)
+
+    PlotGateOccupancy(bcn_airport)
+
 
 #Main display:
 root = tk.Tk()

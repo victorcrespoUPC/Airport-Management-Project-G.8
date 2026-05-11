@@ -11,6 +11,7 @@ class Aircraft:
         self.origin = origin
         self.time = time
 
+
     def get_hour(self):
         """Extract hour from time HH:MM"""
         try:  # Tries to convert the "TimeChain" into integer numbers separated by ":", if it recieves an ERROR, then... (line 18)
