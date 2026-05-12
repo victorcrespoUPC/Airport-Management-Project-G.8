@@ -2,7 +2,6 @@ import math
 import matplotlib.pyplot as plt
 import os
 from airport import IsSchengenairport, LoadAirports, FindAirport
-from airport import IsSchengenairport, LoadAirports, FindAirport
 
 class Aircraft:
     def __init__(self, aircraft_id, airline, origin, time):
