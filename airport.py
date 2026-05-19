@@ -157,7 +157,7 @@ def SaveSchengenAirports(airports, filename):
         for a in schengen_list:
 
             latitude_str = _to_dms_string(a.latitude, is_latitude=True)
-            longitude_str = _to_dms_string(a.longitude, is_latitude=False) #EHHHHHH
+            longitude_str = _to_dms_string(a.longitude, is_latitude=False)
             f.write(f"{a.code} {latitude_str} {longitude_str}\n")
     return 0
 
@@ -181,7 +181,7 @@ def RemoveAirport(airports, code):
 import matplotlib.pyplot as plt
 
 
-def PlotAirports(airports): #This will show a plot wich fratures Schengen and non Schengen airports.
+def PlotAirports(airports): #This will show a plot which features Schengen and non Schengen airports.
 
     if len(airports) == 0:
         print("Error: no airports were loaded.")
