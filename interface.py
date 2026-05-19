@@ -149,6 +149,15 @@ def reload_arrivals_ui():
         else:
             messagebox.showerror("Error", "No valid flights found in file.")
 
+#genera el fitxer .kml en el cas que hi hagi flights non-schengen i sinó mostra el missatge d'error
+
+def map_non_schengen_ui():
+    if not flights:
+        messagebox.showerror("Error", "There are no loaded flights.")
+        return
+    MapNonSchengenFlights(flights)
+    messagebox.showinfo("KML", "non_schengen_flights.kml generated!")
+
 #Main display:
 root = tk.Tk()
 root.title("Airport Management")
@@ -197,6 +206,7 @@ tk.Button(frame_v2, text="Plot Schengen", width=15, command=lambda: PlotFlightsT
 tk.Button(frame_v2, text="Save Flights", width=15, command=save_flights_ui).grid(row=1, column=0, padx=5, pady=5)
 tk.Button(frame_v2, text="Map All Flights", width=15, command=lambda: map_flights_ui(False)).grid(row=1, column=1, padx=5, pady=5)
 tk.Button(frame_v2, text="Map Long Dist", width=15, command=lambda: map_flights_ui(True)).grid(row=1, column=2, padx=5, pady=5)
+tk.Button(frame_v2, text="Map Non-Schengen", width=15, command=map_non_schengen_ui).grid(row=1, column=3, padx=5, pady=5)
 
 tk.Button(frame_v2, text="Clear All Arrivals", width=15, command=clear_arrivals,bg='red').grid(row=2, column=0, padx=5, pady=5)
 tk.Button(frame_v2, text="Reload Arrivals", width=15, command=reload_arrivals_ui,bg='green').grid(row=2, column=1, padx=5, pady=5)
