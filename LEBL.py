@@ -353,3 +353,24 @@ def AssignNightGates(bcn,aircrafts):
             AssignGate(bcn,a,is_schengen=False) #NightAircrafts have no origin, set to false by default (they only have departure info!)
         i+=1
     return 0 #Success
+
+def FreeGate(bcn,id):
+    if not bcn:
+        return
+    result = []
+    t = 0
+    while t < len(bcn.terminals):
+        terminal = bcn.terminals[t]
+        a = 0
+        while a < len(terminal.boarding_areas):
+            area = terminal.boarding_areas[a]
+            g = 0
+            while g < len(area.gates):
+                gate = area.gates[g]
+                if not area.gates[g].occupied:
+                    area.gates[g].occupied = False
+                    area.gates[g].aircraft_id = aircraft.aircraft_id
+                    return 0
+                g+=1
+            a+=1
+        t+=1

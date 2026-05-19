@@ -234,6 +234,14 @@ def show_occupancy_ui():
         txt.insert(tk.END, line)
 
     PlotGateOccupancy(bcn_airport)
+departures=[] #We create a new list beacuse we treated arrivals as "flights" previously
+def load_departures_ui():
+    global flights
+    filename = filedialog.askopenfilename(title="Select Departures file", filetypes=[("Text files", "*.txt")])
+    if filename:
+        departures = LoadDepartures(filename)
+        messagebox.showinfo("Success", f"Loaded {len(flights)} departures.")
+        flights= MergeMovements(arrivals,departures)
 
 
 #Main display:

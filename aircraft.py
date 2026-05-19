@@ -235,7 +235,7 @@ def MergeMovements(arrivals,departures): #Compatible means that departure > arri
         a=arrivals[i]
         j=0
         Found = False
-        while j<len(departures):
+        while j<len(departures) and not Found:
             d=departures[j]
             if a.aircraft_id==d.aircraft_id and a.time<d.departure_time: #Filtering compatible flights
                 a.destination=d.destination
@@ -248,17 +248,18 @@ def MergeMovements(arrivals,departures): #Compatible means that departure > arri
         i += 1
 
     j=0
-    while j<len(departures): #Now re-running the departures in order to get the ones that didn't get merged
-        d=departures[j]
-        Found2=False
-        k=0
-        while k<len(arrivals):
-            if arrivals[k].aircraft_id==d.aircraft_id:
-                Found2=True
-            k += 1
-        if not Found2:
-            result.append(d)
-        j+=1
+    result.append(NightAircraft(departures))
+    # while j<len(departures): #Now re-running the departures in order to get the ones that didn't get merged
+    #     d=departures[j]
+    #     Found2=False
+    #     k=0
+    #     while k<len(arrivals):
+    #         if arrivals[k].aircraft_id==d.aircraft_id:
+    #             Found2=True
+    #         k += 1
+    #     if not Found2:
+    #         result.append(d)
+    #     j+=1
     return result
 
 def NightAircraft(aircrafts):
