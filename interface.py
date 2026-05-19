@@ -130,7 +130,32 @@ def save_flights_ui():
 def map_flights_ui(long_only=False):
     MapFlights(flights, only_long=long_only)
     messagebox.showinfo("KML", "flights.kml generated!")
+    
+def filter_short_distance():
+    global flights
+    if not flights:
+        messagebox.showerror("Error", "No flights loaded.")
+        return
 
+    original_count = len(flights)
+    filtrado = []
+    i = 0
+    while i < len(flights):
+        a = flights[i] #vuelo actual
+        origin_ap = FindAirport(all_airports, a.origin) #buscamos el aeropuerto de origen
+        lebl = FindAirport(all_airports, "LEBL")
+        if origin_ap is not None and lebl is not None:
+            dist = haversine(origin_ap.latitude, origin_ap.longitude,lebl.latitude, lebl.longitude)
+            if dist >= 1000:
+                filtrado.append(a)
+        i += 1
+
+    flights = filtrado
+    removed = original_count - len(flights)
+    messagebox.showinfo("Filtro aplicado",
+        f"Removed {removed} short-distance flights (<1000 km).\n"
+        f"Remaining: {len(flights)} flights.\n"
+        f"flights.kml generated — open with Google Earth.")
 def clear_arrivals():  #We will use this to reload new flights, being able to eliminate the ones we don't want to study anymore
     global arrivals
     arrivals = []
@@ -210,5 +235,6 @@ tk.Button(frame_v2, text="Map Non-Schengen", width=15, command=map_non_schengen_
 
 tk.Button(frame_v2, text="Clear All Arrivals", width=15, command=clear_arrivals,bg='red').grid(row=2, column=0, padx=5, pady=5)
 tk.Button(frame_v2, text="Reload Arrivals", width=15, command=reload_arrivals_ui,bg='green').grid(row=2, column=1, padx=5, pady=5)
+tk.Button(frame_v2, text="Filter <1000km", width=15, command=filter_short_distance, bg='blue', fg='white').grid(row=2, column=2, padx=5, pady=5)
 
 root.mainloop()
