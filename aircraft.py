@@ -204,6 +204,75 @@ def MapFlights(aircrafts,
     f.write('</Document>\n</kml>')
     f.close()
 
+
+def LoadDepartures(filename): #Almost the same structure as LoadArrivals (changing the updated class and the file tor read)
+
+    if not os.path.exists(filename):
+        return []
+
+    departures = [] #list of all the departures loaded by data (of the file)
+    f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+
+    i = 1  # We want to skip the first line of the text file, which is only a title without relevant information.
+    while i < len(lines):
+        line = lines[i]
+        parts = line.split()
+        if len(parts) >= 4 and is_valid_time(parts[2]):  # Looking at the structure of the new file, it shows the data as: Aircraft(ID),Destination, Departure time and Airline
+            a = Aircraft(aircraft_id=parts[0],airline=parts[3],origin=None,time=None,destination=parts[1],departure_time=parts[2]) #And we get this result using the file structure + The new None settings
+            departures.append(a)
+        i = i + 1
+    return departures
+
+def MergeMovements(arrivals,departures): #Compatible means that departure > arrival
+    if len(arrivals)==0 or len(departures)==0:
+        return [],-1
+    result=[]   #The structure is similar as reading a text file and getting information by using parts[i], but we do it this way because the files are already loaded in the program
+
+    i=0
+    while i<len(arrivals):
+        a=arrivals[i]
+        j=0
+        Found = False
+        while j<len(departures):
+            d=departures[j]
+            if a.aircraft_id==d.aircraft_id and a.time<d.departure_time: #Filtering compatible flights
+                a.destination=d.destination
+                a.departure_time=d.departure_time #Merge both in the same object in order to fill the fields that were set to None in the beginning (aircraft class) (departure_time and destination)
+                result.append(a) #a is now filled
+                Found = True
+            j+=1
+        if not Found:
+            result.append(a) #If it doesn't find equals, it adds only arrivals.
+        i += 1
+
+    j=0
+    while j<len(departures): #Now re-running the departures in order to get the ones that didn't get merged
+        d=departures[j]
+        Found2=False
+        k=0
+        while k<len(arrivals):
+            if arrivals[k].aircraft_id==d.aircraft_id:
+                Found2=True
+            k += 1
+        if not Found2:
+            result.append(d)
+        j+=1
+    return result
+
+def NightAircraft(aircrafts):
+    if len(aircrafts)==0:
+        return [],-1 #Error if empty! messagebox.showerror?
+    result=[]
+    j = 0
+    while j < len(aircrafts):  # Now re-running the departures in order to get the ones that didn't get merged
+        a = aircrafts[j]
+        if a.time==None: #If they only have departure information they are considered night aircraft, that's why we filter it like this
+            result.append(a)
+        i+=1
+    return result
+
 # Test section
 if __name__ == "__main__":
     arrivals = LoadArrivals("Arrivals.txt")
