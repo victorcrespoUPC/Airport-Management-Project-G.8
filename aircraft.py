@@ -2,7 +2,6 @@ import math
 import matplotlib.pyplot as plt
 import os
 from airport import IsSchengenairport, LoadAirports, FindAirport
-from airport import IsSchengenairport, LoadAirports, FindAirport
 
 class Aircraft:
     def __init__(self, aircraft_id, airline, origin, time):
@@ -202,6 +201,18 @@ def MapFlights(aircrafts,
 
     f.write('</Document>\n</kml>')
     f.close()
+
+#recorre la llista de "aircrafts" i es guarda únicament aquells que son non-Schengen:
+
+def MapNonSchengenFlights(aircrafts):
+    non_schengen = []
+    i = 0
+    while i < len(aircrafts):
+        if IsSchengenairport(aircrafts[i].origin) == False:
+            non_schengen.append(aircrafts[i])
+        i = i + 1
+    MapFlights(non_schengen)
+
 
 # Test section
 if __name__ == "__main__":
