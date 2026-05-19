@@ -342,3 +342,14 @@ if __name__ == "__main__":
                 print(f"    Area {a.name} type={a.type} gates={len(a.gates)}")
     else:
         print("ERROR: Could not load Terminals.txt")
+
+def AssignNightGates(bcn,aircrafts):
+    if len(aircrafts)==0:
+        return [],-1 #Error if empty list
+    i=0
+    while i<len(aircrafts): #Running aircrafts and checking if there is no arrival information (NightAircraft fundamental condition)
+        a=aircrafts[i]
+        if a.time==None:
+            AssignGate(bcn,a,is_schengen=False) #NightAircrafts have no origin, set to false by default (they only have departure info!)
+        i+=1
+    return 0 #Success
