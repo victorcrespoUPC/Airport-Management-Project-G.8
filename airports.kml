@@ -12,6 +12,13 @@
         </IconStyle>
     </Style>
 <Placemark>
+  <name>BIKF</name>
+  <styleUrl>#schengen</styleUrl>
+  <Point>
+    <coordinates>-22.605555555555558,63.985,0</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
   <name>CYUL</name>
   <styleUrl>#noschengen</styleUrl>
   <Point>
@@ -565,6 +572,13 @@
   </Point>
 </Placemark>
 <Placemark>
+  <name>LEAL</name>
+  <styleUrl>#schengen</styleUrl>
+  <Point>
+    <coordinates>-0.5580555555555556,38.282222222222224,0</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
   <name>LEAM</name>
   <styleUrl>#schengen</styleUrl>
   <Point>
@@ -583,13 +597,6 @@
   <styleUrl>#schengen</styleUrl>
   <Point>
     <coordinates>-2.9105555555555553,43.301111111111105,0</coordinates>
-  </Point>
-</Placemark>
-<Placemark>
-  <name>LEBL</name>
-  <styleUrl>#schengen</styleUrl>
-  <Point>
-    <coordinates>2.0783333333333336,41.29694444444444,0</coordinates>
   </Point>
 </Placemark>
 <Placemark>
@@ -1206,13 +1213,6 @@
   <styleUrl>#noschengen</styleUrl>
   <Point>
     <coordinates>103.98916666666666,1.3591666666666669,0</coordinates>
-  </Point>
-</Placemark>
-<Placemark>
-  <name>LEAL</name>
-  <styleUrl>#schengen</styleUrl>
-  <Point>
-    <coordinates>-0.5580555555555556,38.282222222222224,0</coordinates>
   </Point>
 </Placemark>
 </Document>

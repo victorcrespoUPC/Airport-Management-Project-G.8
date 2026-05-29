@@ -156,8 +156,8 @@ def SaveSchengenAirports(airports, filename):
         f.write("CODE LAT LON\n")
         for a in schengen_list:
 
-            latitude_str = _to_dms_string(a.latitude, is_latitude=True)
-            longitude_str = _to_dms_string(a.longitude, is_latitude=False)
+            latitude_str = _to_dms_string(a.latitude, is_lat=True)
+            longitude_str = _to_dms_string(a.longitude, is_lat=False)
             f.write(f"{a.code} {latitude_str} {longitude_str}\n")
     return 0
 
@@ -205,9 +205,7 @@ def PlotAirports(airports): #This will show a plot which features Schengen and n
     plt.show()
 
 
-def MapAirports(airports): #Here we create the kml files that will show the airports in Google Earth.
-
-
+def MapAirports(airports):
     if len(airports) == 0:
         print("Error: no airports were loaded.")
         return
@@ -216,14 +214,12 @@ def MapAirports(airports): #Here we create the kml files that will show the airp
     kml_content += '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
     kml_content += '<Document>\n'
 
-    #Schengen Airports will be represented as green.
     kml_content += '''<Style id="schengen">
         <IconStyle>
             <color>ff00ff00</color>
         </IconStyle>
     </Style>\n'''
 
-    #NONSchengen Airports will be represented as red.
     kml_content += '''<Style id="noschengen">
         <IconStyle>
             <color>ff0000ff</color>
@@ -240,9 +236,7 @@ def MapAirports(airports): #Here we create the kml files that will show the airp
         kml_content += f'  </Point>\n'
         kml_content += f'</Placemark>\n'
 
-
-    kml_content += '</Document>\n'
-    kml_content += '</kml>\n'
+    kml_content += '</Document>\n</kml>\n'
 
     with open("airports.kml", "w") as f:
         f.write(kml_content)

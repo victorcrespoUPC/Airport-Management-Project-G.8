@@ -1,4 +1,7 @@
 import os
+from airport import LoadAirports, FindAirport
+from aircraft import NightAircraft
+all_airports_cache = LoadAirports("Airports.txt")
 
 class Gate:
     "Represents an individual boarding gate"
@@ -171,21 +174,42 @@ def SearchTerminal(bcn,name):
         i+=1
     return ''
 
+
 def AssignGate(bcn, aircraft, is_schengen):
     terminal_name = SearchTerminal(bcn, aircraft.airline)
+
     if terminal_name == "":
-        # Fallback: use first terminal
-        terminal = bcn.terminals[0]
-    else:
-        terminal = None
-        i = 0
-        while i < len(bcn.terminals):
-            if bcn.terminals[i].name == terminal_name:
-                terminal = bcn.terminals[i]
-            i += 1
+        # Millora: si no trobem l'airline, intentem cada terminal
+        # en lloc d'anar sempre a T1
+        a = 0
+        while a < len(bcn.terminals):
+            terminal = bcn.terminals[a]
+            g_idx = 0
+            while g_idx < len(terminal.boarding_areas):
+                area = terminal.boarding_areas[g_idx]
+                g = 0
+                while g < len(area.gates):
+                    if not area.gates[g].occupied:
+                        area.gates[g].occupied = True
+                        area.gates[g].aircraft_id = aircraft.aircraft_id
+                        return 0
+                    g += 1
+                g_idx += 1
+            a += 1
+        return -1  # Cap porta lliure en cap terminal
+
+    # Cas normal: airline trobada, busquem al seu terminal
+    terminal = None
+    i = 0
+    while i < len(bcn.terminals):
+        if bcn.terminals[i].name == terminal_name:
+            terminal = bcn.terminals[i]
+        i += 1
+
     if terminal is None:
         return -1
 
+    # Primer intentem trobar porta del tipus correcte (Schengen/no-Schengen)
     a = 0
     while a < len(terminal.boarding_areas):
         area = terminal.boarding_areas[a]
@@ -207,7 +231,7 @@ def AssignGate(bcn, aircraft, is_schengen):
                 g += 1
         a += 1
 
-    # Fallback: any free gate
+    # Fallback: qualsevol porta lliure al terminal correcte
     a = 0
     while a < len(terminal.boarding_areas):
         g = 0
@@ -343,21 +367,30 @@ if __name__ == "__main__":
     else:
         print("ERROR: Could not load Terminals.txt")
 
-def AssignNightGates(bcn,aircrafts):
-    if len(aircrafts)==0:
-        return [],-1 #Error if empty list
-    i=0
-    while i<len(aircrafts): #Running aircrafts and checking if there is no arrival information (NightAircraft fundamental condition)
-        a=aircrafts[i]
-        if a.time==None:
-            AssignGate(bcn,a,is_schengen=False) #NightAircrafts have no origin, set to false by default (they only have departure info!)
-        i+=1
-    return 0 #Success
+def AssignNightGates(bcn, aircrafts):
+    if len(aircrafts) == 0:
+        return -1
 
-def FreeGate(bcn,id):
+    i = 0
+    while i < len(aircrafts):
+        a = aircrafts[i]
+        if a.time is None:
+            # Busquem el terminal correcte per airline
+            # Si no té airline coneguda, AssignGate ja fa el fallback a T1
+            # is_schengen=False perquè avions nocturns no tenen origen conegut
+            AssignGate(bcn, a, is_schengen=False)
+        i += 1
+    return 0
+
+
+def FreeGate(bcn, aircraft_id):
+    """
+    Allibera la porta assignada a l'aeronau amb l'id rebut.
+    Retorna 0 si la troba i allibera, -1 si no la troba.
+    """
     if not bcn:
-        return
-    result = []
+        return -1
+
     t = 0
     while t < len(bcn.terminals):
         terminal = bcn.terminals[t]
@@ -367,10 +400,201 @@ def FreeGate(bcn,id):
             g = 0
             while g < len(area.gates):
                 gate = area.gates[g]
-                if not area.gates[g].occupied:
-                    area.gates[g].occupied = False
-                    area.gates[g].aircraft_id = aircraft.aircraft_id
+                if gate.occupied and gate.aircraft_id == aircraft_id:
+                    gate.occupied = False
+                    gate.aircraft_id = None  # Porta lliure
                     return 0
-                g+=1
-            a+=1
-        t+=1
+                g += 1
+            a += 1
+        t += 1
+    return -1  # No s'ha trobat cap porta amb aquest avió
+
+
+def AssignGatesAtTime(bcn, aircrafts, time):
+    """
+    Actualitza l'estat de bcn per a una hora concreta del dia:
+    1. Allibera les portes dels avions que ja han sortit (departure_time <= time)
+    2. Assigna portes als avions que aterren durant la franja d'una hora
+    Retorna el nombre d'avions que no s'han pogut assignar per manca de portes.
+    """
+    h_ref, m_ref = time.split(':')
+    ref_minutes = int(h_ref) * 60 + int(m_ref)
+    end_minutes = ref_minutes + 60  # Finestra d'una hora
+
+    # Pas 1: Alliberar portes dels avions que ja han sortit ABANS d'aquesta hora
+    i = 0
+    while i < len(aircrafts):
+        a = aircrafts[i]
+        if a.departure_time is not None:
+            h_dep, m_dep = a.departure_time.split(':')
+            dep_minutes = int(h_dep) * 60 + int(m_dep)
+            if dep_minutes <= ref_minutes:
+                FreeGate(bcn, a.aircraft_id)
+        i += 1
+
+    # Pas 2: Assignar portes als avions que aterren en aquesta franja horària
+    # Primer construïm un conjunt dels ids que JA tenen porta ocupada
+    occupied_ids = set()
+    for terminal in bcn.terminals:
+        for area in terminal.boarding_areas:
+            for gate in area.gates:
+                if gate.occupied and gate.aircraft_id is not None:
+                    occupied_ids.add(gate.aircraft_id)
+
+    not_assigned = 0
+    i = 0
+    while i < len(aircrafts):
+        a = aircrafts[i]
+        if a.time is not None:
+            h_arr, m_arr = a.time.split(':')
+            arr_minutes = int(h_arr) * 60 + int(m_arr)
+            # Avió dins la finestra d'una hora i sense porta ja assignada
+            if ref_minutes <= arr_minutes < end_minutes:
+                if a.aircraft_id not in occupied_ids:  # ← EVITA REASSIGNAR
+                    origin_ap = FindAirport(all_airports_cache, a.origin)
+                    is_sch = origin_ap.Schengen if origin_ap else False
+                    if AssignGate(bcn, a, is_sch) == -1:
+                        not_assigned += 1
+                    else:
+                        occupied_ids.add(a.aircraft_id)  # Marca com assignat
+        i += 1
+
+    return not_assigned
+
+
+def PlotDayOccupancy(bcn, aircrafts):
+    """
+    Simula tot el dia minut a minut (per hores) i mostra:
+    - Portes ocupades per terminal a cada hora
+    - Avions no assignats per manca de portes a cada hora
+    """
+    hours = list(range(24))
+    terminal_names = [t.name for t in bcn.terminals]
+
+    occupancy_per_terminal = {}
+    for t in bcn.terminals:
+        occupancy_per_terminal[t.name] = [0] * 24
+
+    not_assigned_per_hour = [0] * 24
+
+    # Reiniciem totes les portes per simular des del principi del dia
+    for terminal in bcn.terminals:
+        for area in terminal.boarding_areas:
+            for gate in area.gates:
+                gate.occupied = False
+                gate.aircraft_id = None
+
+    # Assignem primer els avions nocturns (sense hora d'arribada, només sortida)
+    night = NightAircraft(aircrafts)
+    if isinstance(night, list) and len(night) > 0:
+        AssignNightGates(bcn, night)
+
+    # Conjunt d'avions ja assignats (per no reassignar)
+    assigned_ids = set()
+    # Afegim els nocturns com ja assignats
+    if isinstance(night, list):
+        for a in night:
+            assigned_ids.add(a.aircraft_id)
+
+    # Simulem hora per hora de forma acumulativa
+    h = 0
+    while h < 24:
+        ref_minutes = h * 60  # Inici de la franja (ex: hora 10 = 600 minuts)
+
+        # Pas 1: Alliberar portes dels avions que SURTEN en algun moment
+        # FINS A la fi d'aquesta hora (és a dir, departure_time < ref_minutes + 60)
+        # Però només els que ja havien arribat (tenen time != None o són nocturns)
+        i = 0
+        while i < len(aircrafts):
+            a = aircrafts[i]
+            if a.departure_time is not None:
+                try:
+                    hd, md = a.departure_time.split(':')
+                    dep_minutes = int(hd) * 60 + int(md)
+                    # L'avió surt durant aquesta hora
+                    if ref_minutes <= dep_minutes < ref_minutes + 60:
+                        FreeGate(bcn, a.aircraft_id)
+                        # Ja no el considerem assignat (pot tornar a arribar)
+                        if a.aircraft_id in assigned_ids:
+                            assigned_ids.discard(a.aircraft_id)
+                except:
+                    pass
+            i += 1
+
+        # Pas 2: Assignar portes als avions que ARRIBEN durant aquesta hora
+        i = 0
+        while i < len(aircrafts):
+            a = aircrafts[i]
+            if a.time is not None:
+                try:
+                    ha, ma = a.time.split(':')
+                    arr_minutes = int(ha) * 60 + int(ma)
+                    # Arriba durant aquesta hora i no té porta ja
+                    if ref_minutes <= arr_minutes < ref_minutes + 60:
+                        if a.aircraft_id not in assigned_ids:
+                            origin_ap = FindAirport(all_airports_cache, a.origin)
+                            is_sch = origin_ap.Schengen if origin_ap else False
+                            if AssignGate(bcn, a, is_sch) == -1:
+                                not_assigned_per_hour[h] += 1  # No hi havia porta
+                            else:
+                                assigned_ids.add(a.aircraft_id)
+                except:
+                    pass
+            i += 1
+
+        # Pas 3: Comptem portes ocupades per terminal AL FINAL d'aquesta hora
+        for terminal in bcn.terminals:
+            count = 0
+            for area in terminal.boarding_areas:
+                for gate in area.gates:
+                    if gate.occupied:
+                        count += 1
+            occupancy_per_terminal[terminal.name][h] = count
+
+        h += 1
+
+    # ── Dibuixem els gràfics ──────────────────────────────────────────
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8))
+
+    # Gràfic 1: Ocupació per terminal (una línia per terminal)
+    for t_name in terminal_names:
+        ax1.plot(hours, occupancy_per_terminal[t_name], marker='o', label=t_name)
+    ax1.set_title("Gate occupancy per terminal throughout the day")
+    ax1.set_xlabel("Hour")
+    ax1.set_ylabel("Occupied gates")
+    ax1.set_xticks(hours)
+    ax1.legend()
+    ax1.grid(True)
+
+    # Gràfic 2: Avions no assignats per hora (valors enters)
+    ax2.bar(hours, not_assigned_per_hour, color='red', alpha=0.7)
+    ax2.set_title("Aircraft not assigned per hour (no free gates)")
+    ax2.set_xlabel("Hour")
+    ax2.set_ylabel("Aircraft not assigned")
+    ax2.set_xticks(hours)
+    ax2.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+    ax2.set_ylim(bottom=0)  # ← Evita valors negatius a l'eix Y
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+    bcn = LoadAirportStructure("Terminals.txt")
+    if bcn:
+        print(f"Loaded: {bcn.code}")
+        for t in bcn.terminals:
+            print(f"  Terminal {t.name}, airlines: {t.airlines[:5]}")
+            for a in t.boarding_areas:
+                print(f"    Area {a.name} type={a.type} gates={len(a.gates)}")
+
+        # Test FreeGate
+        result = FreeGate(bcn, "XXXX")
+        print(f"FreeGate inexistent: {result}")  # Ha de ser -1
+
+        # Test AssignNightGates amb llista buida
+        result = AssignNightGates(bcn, [])
+        print(f"AssignNightGates buit: {result}")  # Ha de ser -1
+
+    else:
+        print("ERROR: Could not load Terminals.txt")

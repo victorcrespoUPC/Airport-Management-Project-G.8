@@ -5,11 +5,13 @@ from airport import IsSchengenairport, LoadAirports, FindAirport
 from airport import IsSchengenairport, LoadAirports, FindAirport
 
 class Aircraft:
-    def __init__(self, aircraft_id, airline, origin, time):
+    def __init__(self, aircraft_id, airline, origin, time,destination=None, departure_time=None):
         self.aircraft_id = aircraft_id
         self.airline = airline
         self.origin = origin
         self.time = time
+        self.destination = destination
+        self.departure_time = departure_time
 
 
     def get_hour(self):
@@ -72,10 +74,11 @@ def PlotArrivals(aircrafts):
     i = 0
     while i < len(aircrafts):
         a = aircrafts[i]
-        t_parts = a.time.split(':')
-        hour = int(t_parts[0])
-        if hour >= 0 and hour < 24:
-            hours[hour] = hours[hour] + 1
+        if a.time is not None:  # ← AFEGEIX aquesta comprovació
+            t_parts = a.time.split(':')
+            hour = int(t_parts[0])
+            if 0 <= hour < 24:
+                hours[hour] = hours[hour] + 1
         i = i + 1
 
     plt.figure()
@@ -174,18 +177,16 @@ def LongDistanceArrivals(aircrafts):
         i = i + 1
     return long_dist
 
-def MapFlights(aircrafts,
-               only_long=False):  # This will show flight routes in Google Earth, we will see long flights by setting:
-    all_ap = LoadAirports("Airports.txt")  # only_long = True (it is False by default)
+def MapFlights(aircrafts, only_long=False):
+    all_ap = LoadAirports("Airports.txt")
     lebl = FindAirport(all_ap, "LEBL")
-    if lebl == None:
+    if lebl is None:
         return
 
     f = open("flights.kml", "w")
-    f.write(
-        '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n')  # Standard archive for GEarth
+    f.write('<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n')
 
-    if only_long == True:
+    if only_long:
         vols_a_pintar = LongDistanceArrivals(aircrafts)
     else:
         vols_a_pintar = aircrafts
@@ -194,16 +195,15 @@ def MapFlights(aircrafts,
     while i < len(vols_a_pintar):
         a = vols_a_pintar[i]
         origin_ap = FindAirport(all_ap, a.origin)
-        if origin_ap != None:
+        if origin_ap is not None:
             f.write('<Placemark>\n<LineString><coordinates>\n')
             f.write(str(origin_ap.longitude) + "," + str(origin_ap.latitude) + ",0 ")
             f.write(str(lebl.longitude) + "," + str(lebl.latitude) + ",0\n")
             f.write('</coordinates></LineString>\n</Placemark>\n')
-        i = i + 1
+        i += 1
 
     f.write('</Document>\n</kml>')
     f.close()
-
 
 def LoadDepartures(filename): #Almost the same structure as LoadArrivals (changing the updated class and the file tor read)
 
@@ -225,42 +225,51 @@ def LoadDepartures(filename): #Almost the same structure as LoadArrivals (changi
         i = i + 1
     return departures
 
-def MergeMovements(arrivals,departures): #Compatible means that departure > arrival
-    if len(arrivals)==0 or len(departures)==0:
-        return [],-1
-    result=[]   #The structure is similar as reading a text file and getting information by using parts[i], but we do it this way because the files are already loaded in the program
+def MergeMovements(arrivals, departures):
+    """
+    Combina arrivals i departures pel mateix aircraft_id i temps compatibles
+    (arrival < departure). Un avió pot aterrar i sortir més d'un cop al dia.
+    Retorna una llista unificada.
+    """
+    if len(arrivals) == 0 or len(departures) == 0:
+        return [], -1
 
-    i=0
-    while i<len(arrivals):
-        a=arrivals[i]
-        j=0
-        Found = False
-        while j<len(departures) and not Found:
-            d=departures[j]
-            if a.aircraft_id==d.aircraft_id and a.time<d.departure_time: #Filtering compatible flights
-                a.destination=d.destination
-                a.departure_time=d.departure_time #Merge both in the same object in order to fill the fields that were set to None in the beginning (aircraft class) (departure_time and destination)
-                result.append(a) #a is now filled
-                Found = True
-            j+=1
-        if not Found:
-            result.append(a) #If it doesn't find equals, it adds only arrivals.
+    result = []
+
+    i = 0
+    while i < len(arrivals):
+        a = arrivals[i]
+        matched = False
+        j = 0
+        while j < len(departures):
+            d = departures[j]
+            # Mateixa aeronau i temps compatible (sortida > arribada)
+            if a.aircraft_id == d.aircraft_id and a.time < d.departure_time:
+                # Copiem les dades de sortida a l'objecte d'arribada
+                a.destination = d.destination
+                a.departure_time = d.departure_time
+                matched = True
+                # NOTA: no fem break perquè pot aterrar/sortir més d'un cop
+            j += 1
+        result.append(a)  # Afegim sempre (tingui o no sortida)
         i += 1
 
-    j=0
-    result.append(NightAircraft(departures))
-    # while j<len(departures): #Now re-running the departures in order to get the ones that didn't get merged
-    #     d=departures[j]
-    #     Found2=False
-    #     k=0
-    #     while k<len(arrivals):
-    #         if arrivals[k].aircraft_id==d.aircraft_id:
-    #             Found2=True
-    #         k += 1
-    #     if not Found2:
-    #         result.append(d)
-    #     j+=1
+    # Ara afegim les sortides que no tenien arribada (avions nocturns)
+    j = 0
+    while j < len(departures):
+        d = departures[j]
+        found = False
+        k = 0
+        while k < len(arrivals):
+            if arrivals[k].aircraft_id == d.aircraft_id:
+                found = True
+            k += 1
+        if not found:
+            result.append(d)  # Afegim sortida sense arribada (nocturn)
+        j += 1
+
     return result
+
 
 def NightAircraft(aircrafts):
     if len(aircrafts)==0:
@@ -271,15 +280,178 @@ def NightAircraft(aircrafts):
         a = aircrafts[j]
         if a.time==None: #If they only have departure information they are considered night aircraft, that's why we filter it like this
             result.append(a)
-        i+=1
+        j+=1
     return result
+
+#nova funcionalitat
+def DayStatistics(aircrafts):
+    """
+    Calcula i mostra estadístiques del dia en un gràfic de resum:
+    - Hora punta d'arribades
+    - Aerolínia més freqüent
+    - % vols Schengen vs No-Schengen
+    - Total de vols, origins únics, avions nocturns
+    """
+    if len(aircrafts) == 0:
+        print("Error: No flights loaded.")
+        return
+
+    # ── 1. Comptem arribades per hora ──
+    hours = [0] * 24
+    i = 0
+    while i < len(aircrafts):
+        a = aircrafts[i]
+        if a.time is not None:
+            try:
+                h = int(a.time.split(':')[0])
+                if 0 <= h < 24:
+                    hours[h] += 1
+            except:
+                pass
+        i += 1
+
+    peak_hour = hours.index(max(hours))
+    peak_count = max(hours)
+
+    # ── 2. Aerolínia més freqüent ──
+    airline_names = []
+    airline_counts = []
+    i = 0
+    while i < len(aircrafts):
+        cia = aircrafts[i].airline
+        if cia is not None:
+            found = False
+            j = 0
+            while j < len(airline_names):
+                if airline_names[j] == cia:
+                    airline_counts[j] += 1
+                    found = True
+                j += 1
+            if not found:
+                airline_names.append(cia)
+                airline_counts.append(1)
+        i += 1
+
+    if airline_counts:
+        top_idx = airline_counts.index(max(airline_counts))
+        top_airline = airline_names[top_idx]
+        top_count = airline_counts[top_idx]
+    else:
+        top_airline = "N/A"
+        top_count = 0
+
+    # ── 3. % Schengen vs No-Schengen ──
+    schengen = 0
+    no_schengen = 0
+    i = 0
+    while i < len(aircrafts):
+        if aircrafts[i].origin is not None:
+            if IsSchengenairport(aircrafts[i].origin):
+                schengen += 1
+            else:
+                no_schengen += 1
+        i += 1
+
+    total = schengen + no_schengen
+    pct_schengen = round(schengen / total * 100, 1) if total > 0 else 0
+    pct_noschengen = round(100 - pct_schengen, 1)
+
+    # ── 4. Origins únics i avions nocturns ──
+    origins = []
+    night_count = 0
+    i = 0
+    while i < len(aircrafts):
+        a = aircrafts[i]
+        if a.time is None:
+            night_count += 1
+        if a.origin is not None and a.origin not in origins:
+            origins.append(a.origin)
+        i += 1
+
+    total_flights = len(aircrafts)
+
+    # ── Dibuixem el dashboard ──
+    fig = plt.figure(figsize=(14, 8))
+    fig.patch.set_facecolor('#f0f4f8')
+    plt.suptitle("✈  Daily Flight Statistics — LEBL", fontsize=16,
+                 fontweight='bold', y=0.98)
+
+    # Gràfic 1 (esquerra dalt): Arribades per hora
+    ax1 = fig.add_subplot(2, 2, 1)
+    colors = ['#e74c3c' if h == peak_hour else '#3498db' for h in range(24)]
+    ax1.bar(range(24), hours, color=colors)
+    ax1.set_title("Arrivals per hour", fontweight='bold')
+    ax1.set_xlabel("Hour")
+    ax1.set_ylabel("Flights")
+    ax1.set_xticks(range(0, 24, 2))
+    ax1.axvline(x=peak_hour, color='red', linestyle='--', alpha=0.5)
+    ax1.text(peak_hour + 0.3, max(hours) * 0.9,
+             f"Peak: {peak_hour:02d}h\n({peak_count} flights)",
+             color='red', fontsize=8)
+    ax1.set_facecolor('#f9f9f9')
+    ax1.grid(axis='y', alpha=0.4)
+
+    # Gràfic 2 (dreta dalt): Top 10 aerolínies
+    ax2 = fig.add_subplot(2, 2, 2)
+    # Ordenem les 10 primeres
+    paired = list(zip(airline_counts, airline_names))
+    paired.sort(reverse=True)
+    top10_counts = [x[0] for x in paired[:10]]
+    top10_names = [x[1] for x in paired[:10]]
+    bar_colors = ['#e74c3c' if n == top_airline else '#2ecc71' for n in top10_names]
+    ax2.barh(top10_names[::-1], top10_counts[::-1], color=bar_colors[::-1])
+    ax2.set_title("Top 10 airlines", fontweight='bold')
+    ax2.set_xlabel("Flights")
+    ax2.set_facecolor('#f9f9f9')
+    ax2.grid(axis='x', alpha=0.4)
+
+    # Gràfic 3 (esquerra baix): Pie Schengen
+    ax3 = fig.add_subplot(2, 2, 3)
+    wedges, texts, autotexts = ax3.pie(
+        [schengen, no_schengen],
+        labels=[f"Schengen\n{pct_schengen}%", f"Non-Schengen\n{pct_noschengen}%"],
+        colors=['#2ecc71', '#e74c3c'],
+        autopct='%1.1f%%',
+        startangle=90,
+        wedgeprops={'edgecolor': 'white', 'linewidth': 2}
+    )
+    ax3.set_title("Schengen vs Non-Schengen", fontweight='bold')
+
+    # Gràfic 4 (dreta baix): Targetes de resum
+    ax4 = fig.add_subplot(2, 2, 4)
+    ax4.axis('off')
+    ax4.set_facecolor('#f9f9f9')
+
+    stats = [
+        ("✈  Total flights",       str(total_flights)),
+        ("🕐  Peak hour",           f"{peak_hour:02d}:00 ({peak_count} flights)"),
+        ("🏆  Top airline",         f"{top_airline} ({top_count} flights)"),
+        ("🌍  Unique origins",      str(len(origins))),
+        ("🌙  Night aircraft",      str(night_count)),
+        ("🟢  Schengen flights",    f"{schengen} ({pct_schengen}%)"),
+        ("🔴  Non-Schengen",        f"{no_schengen} ({pct_noschengen}%)"),
+    ]
+
+    y_pos = 0.95
+    for label, value in stats:
+        ax4.text(0.05, y_pos, label, transform=ax4.transAxes,
+                 fontsize=10, color='#555555')
+        ax4.text(0.6, y_pos, value, transform=ax4.transAxes,
+                 fontsize=10, fontweight='bold', color='#2c3e50')
+        y_pos -= 0.13
+
+    ax4.set_title("Summary", fontweight='bold')
+
+    plt.tight_layout()
+    plt.show()
 
 # Test section
 if __name__ == "__main__":
     arrivals = LoadArrivals("Arrivals.txt")
+    departures = LoadDepartures("Departures.txt")
 
     if len(arrivals) > 0:
-        print(f"Loaded {len(arrivals)} flights")
+        print(f"Loaded {len(arrivals)} arrivals")
         PlotArrivals(arrivals)
         PlotAirlines(arrivals)
         PlotFlightsType(arrivals)
@@ -291,3 +463,18 @@ if __name__ == "__main__":
         SaveFlights(arrivals, "saved_arrivals.txt")
     else:
         print("Error: No arrivals loaded")
+
+    # Test V4
+    if len(departures) > 0:
+        print(f"Loaded {len(departures)} departures")
+
+        merged = MergeMovements(arrivals, departures)
+        print(f"Merged movements: {len(merged)}")
+
+        night = NightAircraft(merged)
+        if isinstance(night, list):
+            print(f"Night aircraft: {len(night)}")
+        else:
+            print("No night aircraft found")
+    else:
+        print("Error: No departures loaded")
