@@ -24,7 +24,7 @@ def load_airports():
         filetypes=[("Text files", "*.txt")]
     )
     if filename:
-        airports = LoadAirports(filename)
+        airports = LoadAirports(filename) #Load airports from the selected file
         i = 0
         while i < len(airports):
             ap = airports[i]
@@ -33,30 +33,32 @@ def load_airports():
         update_listbox()
         messagebox.showinfo("Correct", f"You loaded {len(airports)} airports.")
 
+#Manually adds a new airport using the ICAO code entered in the UI
 def add_airport():
     code = entry_code.get().strip().upper()
     if not code:
         messagebox.showerror("Error", "Introduce an ICAO code.")
         return
 
-    # Search in the full database
+    # Search in the full database and check if the code exists
     found = FindAirport(all_airports, code)
     if found is None:
         messagebox.showerror("Error", f"Airport {code} not found in database.")
         return
 
-    # Add to the visible list
+    # If found, Add to the visible list
     SetSchengen(found)
     AddAirport(airports, found)
-    update_listbox()
-    entry_code.delete(0, tk.END)
+    update_listbox() #Refresh the UI list display
+    entry_code.delete(0, tk.END) #Clear the input text box
 
-
+#Remove an airport from the active working list with its ICAO code
 def remove_airport():
     code = entry_code.get().strip().upper()
     if not code:
         messagebox.showerror("Error", "Enter the ICAO code of the airport you want to eliminate.")
         return
+    #Remove the airport form the list
     result = RemoveAirport(airports, code)
     if result == -1: #Reason why we needed -1 in prior result!
         messagebox.showerror("Error", f"The airport {code} isn't registered.")
@@ -65,10 +67,12 @@ def remove_airport():
         update_listbox()
     entry_code.delete(0, tk.END)
 
+#Filters and saves only the Schengen airports from the active list into a new text file
 def save_schengen():
     if not airports:
         messagebox.showerror("Error", "No airports were loaded.")
         return
+    #We ask the user where they want to save the output file
     filename = filedialog.asksaveasfilename(
         title="Save Schengen airports",
         filetypes=[("Text files", "*.txt")]
@@ -80,12 +84,14 @@ def save_schengen():
         else:
             messagebox.showinfo("Success", "Schengen airports saved successfully.")
 
+#Generates a comparison plot of the currently loaded airports
 def show_plot():
     if not airports:
         messagebox.showerror("Error", "No airports were loaded!")
         return
     PlotAirports(airports)
-
+    
+#Generates a KML file with the geolocation of the airports to open it with Google Earth
 def show_map():
     if not airports:
         messagebox.showerror("Error", "There are no loaded airports.")
@@ -93,6 +99,7 @@ def show_map():
     MapAirports(airports)
     messagebox.showinfo("KML created", "File airports.kml was generated.\n Use Google Earth to open it.")
 
+#Clears and refills the Listbox with the updated airport data
 def update_listbox():
     listbox.delete(0, tk.END)
     i = 0
@@ -114,8 +121,9 @@ def update_listbox():
 
         i = i + 1
 
-flights = []
+flights = [] #list for the active flights
 
+#Loads a list of incoming flights from a file
 def load_arrivals_ui():
     global flights
     filename = filedialog.askopenfilename(title="Select Arrivals file", filetypes=[("Text files", "*.txt")])
@@ -123,11 +131,13 @@ def load_arrivals_ui():
         flights = LoadArrivals(filename)
         messagebox.showinfo("Success", f"Loaded {len(flights)} flights.")
 
+#Saves the current list of flights into a text file
 def save_flights_ui():
     filename = filedialog.asksaveasfilename(title="Save Flights", filetypes=[("Text files", "*.txt")])
     if filename:
         SaveFlights(flights, filename)
 
+#Generates mapping files for flights
 def map_flights_ui(long_only=False):
     MapFlights(flights, only_long=long_only)
     messagebox.showinfo("KML", "flights.kml generated!")
@@ -137,6 +147,7 @@ def clear_arrivals():
     flights = []
     messagebox.showinfo("Success", "All arrivals cleared.")
 
+#Allows loading a different arrivals file
 def reload_arrivals_ui():
     global flights
     filename = filedialog.askopenfilename(
