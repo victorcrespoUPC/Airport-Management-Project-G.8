@@ -4,7 +4,6 @@ from airport import *
 from aircraft import *
 from LEBL import *
 
-# Load all airports from file (for searching coordinates)
 all_airports = LoadAirports("Airports.txt")
 i = 0
 while i < len(all_airports):
@@ -33,7 +32,7 @@ def load_airports():
         update_listbox()
         messagebox.showinfo("Correct", f"You loaded {len(airports)} airports.")
 
-#Manually adds a new airport using the ICAO code entered in the UI
+#Manually adds a new airport using the ICAO code 
 def add_airport():
     code = entry_code.get().strip().upper()
     if not code:
@@ -58,7 +57,7 @@ def remove_airport():
     if not code:
         messagebox.showerror("Error", "Enter the ICAO code of the airport you want to eliminate.")
         return
-    #Remove the airport form the list
+    #Remove the airport from the list
     result = RemoveAirport(airports, code)
     if result == -1: #Reason why we needed -1 in prior result!
         messagebox.showerror("Error", f"The airport {code} isn't registered.")
@@ -67,7 +66,7 @@ def remove_airport():
         update_listbox()
     entry_code.delete(0, tk.END)
 
-#Filters and saves only the Schengen airports from the active list into a new text file
+#Filter and saves only the Schengen airports from the active list into a new text file
 def save_schengen():
     if not airports:
         messagebox.showerror("Error", "No airports were loaded.")
@@ -173,7 +172,7 @@ def load_lebl_structure():
     else:
         messagebox.showerror("Error", "Could not find or load Terminals.txt.")
 
-
+#Assigns boarding gates to active flights based on the system clock time
 def assign_gates_to_flights():
     global bcn_airport
     if not bcn_airport:
@@ -196,7 +195,7 @@ def assign_gates_to_flights():
 
     assigned_count = 0
     for flight in flights:
-        # Necessitem hora d'arribada vàlida
+        #We need a valid arrival hour
         if flight.time is None:
             continue
         try:
@@ -205,27 +204,27 @@ def assign_gates_to_flights():
         except:
             continue
 
-        # L'avió ja ha aterrat (arr_minutes <= ara)
+        #If the aircraft has not landed yet, skip it 
         if arr_minutes > current_minutes:
             continue
 
-        # Comprovem si ja ha sortit (si tenim departure_time)
+        #Check if the aircraft has already taken off 
         if flight.departure_time is not None:
             try:
                 hd, md = flight.departure_time.split(':')
                 dep_minutes = int(hd) * 60 + int(md)
                 if dep_minutes <= current_minutes:
-                    continue  # Ja ha sortit, no ocupa porta
+                    continue  #Aircraft has left the airport, gate is free
             except:
                 pass
 
-        # L'avió és a terra: ha arribat i (o no té sortida, o encara no ha sortit)
+        #Aircraft currently on the ground(has arrived and has not departed)
         origin_ap = FindAirport(all_airports, flight.origin)
         is_schengen = origin_ap.Schengen if origin_ap else False
         if AssignGate(bcn_airport, flight, is_schengen) == 0:
             assigned_count += 1
 
-    # Comptem portes
+    #Count gates
     total_gates = 0
     free_gates = 0
     for terminal in bcn_airport.terminals:
@@ -277,7 +276,7 @@ def load_departures_ui():
 
     departures = LoadDepartures(filename)
 
-    # Si no hi ha arrivals carregades, usem només les departures
+    #If there isn't arrival records yet, we only use departures
     if len(flights) == 0:
         flights = departures
         messagebox.showinfo("Success", f"Loaded {len(departures)} departures (no arrivals to merge).")
@@ -285,7 +284,7 @@ def load_departures_ui():
 
     merged = MergeMovements(flights, departures)
 
-    # MergeMovements pot retornar ([], -1) si alguna llista és buida
+    # MergeMovements can return ([], -1) if there is any empty list
     if isinstance(merged, tuple):
         messagebox.showerror("Error", "Could not merge: check that arrivals are loaded first.")
         return
@@ -324,14 +323,14 @@ def assign_gates_by_hour_ui():
             messagebox.showerror("Error", "Enter a valid hour between 0 and 23.")
             return
 
-        # Reset totes les portes
+        # Reset all the gates
         for terminal in bcn_airport.terminals:
             for area in terminal.boarding_areas:
                 for gate in area.gates:
                     gate.occupied = False
                     gate.aircraft_id = None
 
-        # Assignem avions nocturns primer
+        # Assigne night aircrafts
         night = NightAircraft(flights)
         if isinstance(night, list) and len(night) > 0:
             AssignNightGates(bcn_airport, night)
@@ -341,13 +340,13 @@ def assign_gates_by_hour_ui():
             for a in night:
                 assigned_ids.add(a.aircraft_id)
 
-        # Simulem hora per hora des de 0 fins a l'hora demanada
+        # We simulate hour by hour from 00:00 up to he input hour
         total_not_assigned = 0
         h = 0
         while h <= hour_input:
             ref_minutes = h * 60
 
-            # Alliberar avions que surten durant aquesta hora
+            #Free gates for aircrafts taking off during this hour
             for flight in flights:
                 if flight.departure_time is not None:
                     try:
@@ -359,7 +358,7 @@ def assign_gates_by_hour_ui():
                     except:
                         pass
 
-            # Assignar avions que arriben durant aquesta hora
+            #Assign gates to aircrafts landing during this hour
             for flight in flights:
                 if flight.time is not None:
                     try:
@@ -377,7 +376,7 @@ def assign_gates_by_hour_ui():
                         pass
             h += 1
 
-        # Comptem estat actual
+        #Chehc actual status
         total_gates = 0
         occupied_gates = 0
         for terminal in bcn_airport.terminals:
@@ -389,7 +388,7 @@ def assign_gates_by_hour_ui():
 
         top.destroy()
 
-        # Mostrem primer un resum en text
+        #Shou results to the user
         messagebox.showinfo(
             "Gate status",
             f"State at {hour_input:02d}:00\n"
@@ -399,14 +398,14 @@ def assign_gates_by_hour_ui():
             f"Not assigned (full terminal): {total_not_assigned}"
         )
 
-        # I després el gràfic visual de portes ← LA PART EXTRA DE V4
+        #Graphical control plot of the gates (extra part of V4)
         PlotGateOccupancy(bcn_airport)
 
     tk.Button(top, text="Show occupancy", command=do_assign).pack(pady=10)
 
 
 def plot_day_occupancy_ui():
-    """Mostra el gràfic d'ocupació de portes durant tot el dia."""
+    #Show the visual layout of gate occupations across the full day
     if not bcn_airport:
         messagebox.showerror("Error", "First load the LEBL structure.")
         return
@@ -497,46 +496,46 @@ tk.Button(frame_v2, text="📊 Day Statistics", width=15,
           command=lambda: DayStatistics(flights)).grid(row=1, column=3, padx=5, pady=5)
 
 
-# ── RELLOTGE EN TEMPS REAL I PRÒXIMS VOLS (nova funcionalitat)
+# ── LIVE COMPUTER CLOCK AND NEXT FLIGHTS (new funcionality)
 
-# Frame del rellotge a la part superior de la interfície
+#Live status on the top of the interface
 frame_clock = tk.LabelFrame(root, text="🕐 Live Airport Monitor",
                              padx=10, pady=8, fg="darkblue",
                              font=("Arial", 10, "bold"))
 frame_clock.pack(pady=5, fill="x", padx=20)
 
-# Rellotge gran
+#Big digital clock
 label_clock = tk.Label(frame_clock, text="00:00:00",
                         font=("Courier", 28, "bold"), fg="darkblue")
 label_clock.grid(row=0, column=0, rowspan=2, padx=20)
 
-# Separador visual
+#Visual layout divider
 tk.Label(frame_clock, text="|", font=("Arial", 30), fg="lightgray").grid(
     row=0, column=1, rowspan=2, padx=10)
 
-# Pròxim vol a arribar
+#Next arriving flight information
 tk.Label(frame_clock, text="Next arrival:",
          font=("Arial", 9), fg="gray").grid(row=0, column=2, sticky="w")
 label_next_arrival = tk.Label(frame_clock, text="— Load flights —",
                                font=("Arial", 11, "bold"), fg="#27ae60")
 label_next_arrival.grid(row=1, column=2, sticky="w")
 
-# Separador
+#Divider line
 tk.Label(frame_clock, text="|", font=("Arial", 30), fg="lightgray").grid(
     row=0, column=3, rowspan=2, padx=10)
 
-# Pròxima sortida
+#Next departure information
 tk.Label(frame_clock, text="Next departure:",
          font=("Arial", 9), fg="gray").grid(row=0, column=4, sticky="w")
 label_next_departure = tk.Label(frame_clock, text="— Load flights —",
                                  font=("Arial", 11, "bold"), fg="#e74c3c")
 label_next_departure.grid(row=1, column=4, sticky="w")
 
-# Separador
+#Divider line
 tk.Label(frame_clock, text="|", font=("Arial", 30), fg="lightgray").grid(
     row=0, column=5, rowspan=2, padx=10)
 
-# Vols actius ara
+#Active flights on the airport ground
 tk.Label(frame_clock, text="Active flights now:",
          font=("Arial", 9), fg="gray").grid(row=0, column=6, sticky="w")
 label_active = tk.Label(frame_clock, text="—",
@@ -546,18 +545,18 @@ label_active.grid(row=1, column=6, sticky="w")
 
 def update_clock():
     """
-    S'executa cada segon. Actualitza el rellotge i els pròxims vols.
+    Runs every second. Updates the clock and upcoming flights
     """
     import datetime
     now = datetime.datetime.now()
     current_time = now.strftime("%H:%M:%S")
     current_minutes = now.hour * 60 + now.minute
 
-    # Actualitzem el rellotge
+    #Update the clock
     label_clock.config(text=current_time)
 
     if flights:
-        # ── Pròxima arribada (la més propera que encara no ha aterrat) ──
+        # ── UPCOMING ARRIVALS (the closest one hasn't landed yet) ──
         next_arr = None
         next_arr_minutes = 99999
         i = 0
@@ -567,7 +566,7 @@ def update_clock():
                 try:
                     h, m = f.time.split(':')
                     arr_min = int(h) * 60 + int(m)
-                    # Vols que arriben en els propers 60 minuts
+                    #Planes landing between now and the next 60 minutes
                     if current_minutes <= arr_min <= current_minutes + 60:
                         if arr_min < next_arr_minutes:
                             next_arr_minutes = arr_min
@@ -584,7 +583,7 @@ def update_clock():
         else:
             label_next_arrival.config(text="No arrivals in next 60 min", fg="gray")
 
-        # ── Pròxima sortida ──
+        # ── UPCOMING DEPARTURES ──
         next_dep = None
         next_dep_minutes = 99999
         i = 0
@@ -611,7 +610,7 @@ def update_clock():
         else:
             label_next_departure.config(text="No departures in next 60 min", fg="gray")
 
-        # ── Vols actius ara (han arribat i no han sortit) ──
+        # ── PLANES SITTING LIVE ON THE GROUND RIGHT NOW (have arrived and haven't left yet) ──
         active = 0
         i = 0
         while i < len(flights):
@@ -621,25 +620,23 @@ def update_clock():
                     h, m = f.time.split(':')
                     arr_min = int(h) * 60 + int(m)
                     if arr_min <= current_minutes:
-                        # Comprovem si ja ha sortit
+                        #Check if it has already taken off
                         already_departed = False
                         if f.departure_time is not None:
                             hd, md = f.departure_time.split(':')
                             dep_min = int(hd) * 60 + int(md)
                             if dep_min <= current_minutes:
-                                already_departed = True
+                                already_departed = True #Plane already flew away
                         if not already_departed:
-                            active += 1
+                            active += 1 #Plane is still at the airport
                 except:
                     pass
             i += 1
 
         label_active.config(text=f"{active} aircraft on ground")
 
-    # Tornem a cridar cada 1000ms (1 segon)
+    #Wait 1 second and run again 
     root.after(1000, update_clock)
 
-
-# Iniciem el rellotge
 update_clock()
 root.mainloop()
