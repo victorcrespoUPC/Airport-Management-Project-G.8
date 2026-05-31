@@ -15,7 +15,6 @@ while i < len(all_airports):
 # This is the list shown in the interface (starts empty)
 airports = []
 
-
 def load_airports():
     global airports
     filename = filedialog.askopenfilename(
@@ -224,7 +223,7 @@ def assign_gates_to_flights():
         if AssignGate(bcn_airport, flight, is_schengen) == 0:
             assigned_count += 1
 
-    #Count gates
+    #Count the gates
     total_gates = 0
     free_gates = 0
     for terminal in bcn_airport.terminals:
@@ -263,7 +262,7 @@ def show_occupancy_ui():
 
     PlotGateOccupancy(bcn_airport)
 
-# ── Funcions de la interfície per a V4 ──────────────────────────────
+# ── Interface functions for V4 ──────────────────────────────
 
 def load_departures_ui():
     global flights
@@ -276,7 +275,7 @@ def load_departures_ui():
 
     departures = LoadDepartures(filename)
 
-    #If there isn't arrival records yet, we only use departures
+    #If no arrivals are loaded, we use departures only
     if len(flights) == 0:
         flights = departures
         messagebox.showinfo("Success", f"Loaded {len(departures)} departures (no arrivals to merge).")
@@ -284,7 +283,7 @@ def load_departures_ui():
 
     merged = MergeMovements(flights, departures)
 
-    # MergeMovements can return ([], -1) if there is any empty list
+    # MergeMovements can return ([], -1) if a list is empty
     if isinstance(merged, tuple):
         messagebox.showerror("Error", "Could not merge: check that arrivals are loaded first.")
         return
@@ -295,9 +294,9 @@ def load_departures_ui():
 
 def assign_gates_by_hour_ui():
     """
-    Simula l'estat de l'aeroport a una hora concreta del dia
-    i mostra el gràfic visual de portes (PlotGateOccupancy).
-    Això és la funcionalitat extra de V4 que demana el projecte.
+    "Simulates the airport state at a specific hour of the day 
+    and shows the visual gate chart (PlotGateOccupancy). 
+    This is the extra V4 feature requested by the project."
     """
     if not bcn_airport:
         messagebox.showerror("Error", "First load the LEBL structure.")
@@ -340,13 +339,13 @@ def assign_gates_by_hour_ui():
             for a in night:
                 assigned_ids.add(a.aircraft_id)
 
-        # We simulate hour by hour from 00:00 up to he input hour
+        # We simulate hour by hour from 00:00 up to the input hour
         total_not_assigned = 0
         h = 0
         while h <= hour_input:
             ref_minutes = h * 60
 
-            #Free gates for aircrafts taking off during this hour
+            #Free gates for aircrafts that leave during this hour
             for flight in flights:
                 if flight.departure_time is not None:
                     try:
@@ -376,7 +375,7 @@ def assign_gates_by_hour_ui():
                         pass
             h += 1
 
-        #Chehc actual status
+        #Check current state
         total_gates = 0
         occupied_gates = 0
         for terminal in bcn_airport.terminals:
@@ -388,7 +387,7 @@ def assign_gates_by_hour_ui():
 
         top.destroy()
 
-        #Shou results to the user
+        #Shou a quick text summary first
         messagebox.showinfo(
             "Gate status",
             f"State at {hour_input:02d}:00\n"
@@ -398,7 +397,7 @@ def assign_gates_by_hour_ui():
             f"Not assigned (full terminal): {total_not_assigned}"
         )
 
-        #Graphical control plot of the gates (extra part of V4)
+        #Visual gate plot (extra part of V4)
         PlotGateOccupancy(bcn_airport)
 
     tk.Button(top, text="Show occupancy", command=do_assign).pack(pady=10)
@@ -509,7 +508,7 @@ label_clock = tk.Label(frame_clock, text="00:00:00",
                         font=("Courier", 28, "bold"), fg="darkblue")
 label_clock.grid(row=0, column=0, rowspan=2, padx=20)
 
-#Visual layout divider
+#Divider line
 tk.Label(frame_clock, text="|", font=("Arial", 30), fg="lightgray").grid(
     row=0, column=1, rowspan=2, padx=10)
 
@@ -638,5 +637,6 @@ def update_clock():
     #Wait 1 second and run again 
     root.after(1000, update_clock)
 
+Start the live clock system loop
 update_clock()
 root.mainloop()
