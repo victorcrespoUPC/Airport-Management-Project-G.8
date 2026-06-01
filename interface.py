@@ -95,7 +95,8 @@ def show_map():
         messagebox.showerror("Error", "There are no loaded airports.")
         return
     MapAirports(airports)
-    messagebox.showinfo("KML created", "File airports.kml was generated.\n Use Google Earth to open it.")
+    messagebox.showinfo("MAPPING AIRPORTS", "Opening Google Earth Pro (install first, please).")
+    os.startfile("airports.kml") #If the user doesn't have GE pro installed the file is generated in all the work files anyway.
 
 #Clears and refills the Listbox with the updated airport data
 def update_listbox():
@@ -138,7 +139,8 @@ def save_flights_ui():
 #Generates mapping files for flights
 def map_flights_ui(long_only=False):
     MapFlights(flights, only_long=long_only)
-    messagebox.showinfo("KML", "flights.kml generated!")
+    messagebox.showinfo("MAPPING FLIGHTS", "Opening Google Earth Pro (install first, please).")
+    os.startfile("flights.kml")
 
 def clear_arrivals():
     global flights
@@ -637,6 +639,6 @@ def update_clock():
     #Wait 1 second and run again 
     root.after(1000, update_clock)
 
-Start the live clock system loop
+#Start the live clock system loop:
 update_clock()
 root.mainloop()
